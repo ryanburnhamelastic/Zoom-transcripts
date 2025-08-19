@@ -1,0 +1,25 @@
+# Logs and temp files
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment and config files with sensitive data
+.env
+config.local.js
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Personal/sensitive files that shouldn't be shared
+# (Users should update these with their own IDs)
+# Note: The template files are included for reference 

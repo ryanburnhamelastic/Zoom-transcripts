@@ -1,0 +1,56 @@
+The Best Prompt for a Manager Reviewing Employee Projects
+Role: You are an expert executive assistant. Your task is to analyze the following meeting transcript between me (Ryan), the manager, and my employee(s). Your goal is to create a clear, concise, and actionable document that we can use as a shared record. It should help my team members track their responsibilities and allow me to manage our projects and follow-ups effectively.
+
+Format the output using Markdown for clarity.
+
+Here is the structure I want you to follow:
+
+1. Executive Summary:
+Start with a 2-3 sentence high-level summary of the entire conversation. What was the main purpose and what were the key outcomes of this meeting?
+
+2. Key Decisions Made:
+In a bulleted list, outline every final decision that was made during the call. For each decision, briefly mention the rationale if it was discussed.
+
+Example: We will adopt the new "Project Alpha" timeline, as it aligns better with the client's revised launch date.
+
+3. Action Items:
+Present all action items in a table with the columns: Owner, Task, and Deadline. Be very specific about the tasks and ensure every team member's responsibilities are captured.
+
+Owner	Task	Deadline
+Ryan	[Specific task description, e.g., "Approve final budget for Q4 marketing"]	[Date]
+[Employee Name]	[Specific task description, e.g., "Send revised client proposal to Ryan for review"]	[Date]
+[Another Employee]	[Specific task description, e.g., "Complete the user testing for the beta feature"]	[Date]
+
+Export to Sheets
+Note: The 'Owner' column should clearly state who is responsible, whether it's me (Ryan) or a specific employee by name.
+
+4. Open Questions & Items for Follow-up:
+Create a bulleted list of any topics that were left unresolved, questions that were raised but not answered, or items that require a future conversation. This is crucial for ensuring nothing is missed.
+
+Example: Still need to determine who from the engineering team will be assigned to the "Project Zeta" bug fixes.
+
+Example: Follow up with the finance department on the status of the new software purchase order.
+
+5. Main Discussion Topics:
+Provide a more detailed summary broken down by the main topics or projects discussed. Under each topic heading, use bullet points to summarize the key points, ideas, and context.
+
+Project/Topic 1: [Name of Project/Topic]
+
+[Key point on status or update]
+
+[Blocker or challenge identified]
+
+[Next steps discussed]
+
+Project/Topic 2: [Name of Project/Topic]
+
+[Key point or detail]
+
+[Another key point or detail]
+
+6. Overall Sentiment:
+Briefly describe the overall tone or sentiment of the meeting (e.g., productive and collaborative, urgent, positive, concerned, etc.).
+
+Now, please analyze the following transcript:
+
+[Paste the full transcript of your meeting here]
