@@ -1,201 +1,214 @@
-# Quick Setup Guide
+# Team Meeting Transcript Processor Setup Guide
 
-Follow these steps to get your Zoom transcript processor running in 15 minutes.
+This guide will walk you through setting up the Team Meeting Transcript Processor to automatically convert your team meeting transcripts into structured notes.
+
+## Overview
+
+This system processes team meeting transcripts from Google Drive and generates comprehensive meeting notes in a shared Google Doc using Google Gemini AI. It's designed for:
+
+- Team standups and check-ins
+- Sprint planning sessions
+- Retrospectives
+- Cross-functional collaboration meetings
+- Project status meetings
 
 ## Prerequisites
 
-- Google account with Drive access
-- Google AI Studio account (free tier available)
-- Zoom transcripts saved to your Google Drive
+- Google account with access to Google Drive, Docs, and Sheets
+- Google Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- Team meeting transcripts in supported format (.transcript or .transcript.vtt)
 
-## Step 1: Get Your Google Drive Folder ID
+## Step 1: Create Required Google Documents
 
-1. Open your transcript folder: https://drive.google.com/drive/folders/1KFvT3C0ONlIBX1bv0V7JLlAlLW_6yRIV
-2. The folder ID is already set in the code: `1KFvT3C0ONlIBX1bv0V7JLlAlLW_6yRIV`
+### 1.1 Create Team Meeting Notes Document
+1. Go to [Google Docs](https://docs.google.com)
+2. Create a new document titled "Team Meeting Notes" (or your preferred name)
+3. Keep this document open - you'll need its ID
 
-## Step 2: Create Google Docs for Each Person
+### 1.2 Create Tracking Spreadsheet
+1. Go to [Google Sheets](https://sheets.google.com)
+2. Create a new spreadsheet titled "Team Meeting Transcript Tracking"
+3. Keep this spreadsheet open - you'll need its ID
 
-For each person you have 1:1s with:
+### 1.3 Organize Your Transcript Folder
+1. In Google Drive, create or identify the folder containing your team meeting transcripts
+2. The system will recursively search this folder and all subfolders
+3. Note the folder ID from the URL
 
-1. Create a new Google Doc
-2. Name it something like "Meeting Notes - [Person Name]"
-3. Copy the document ID from the URL (the long string after `/d/`)
+## Step 2: Get Required IDs
 
-Example URL: `https://docs.google.com/document/d/1ABC123XYZ789/edit`
-Document ID: `1ABC123XYZ789`
+### 2.1 Get Document IDs
+For each Google Doc/Sheet you created:
+1. Look at the URL: `https://docs.google.com/document/d/DOCUMENT_ID/edit`
+2. Copy the `DOCUMENT_ID` part (the long string between `/d/` and `/edit`)
+3. Save these IDs - you'll need them for configuration
 
-## Step 2.5: Create a Tracking Sheet
+### 2.2 Get Folder ID
+1. Navigate to your transcript folder in Google Drive
+2. Look at the URL: `https://drive.google.com/drive/folders/FOLDER_ID`
+3. Copy the `FOLDER_ID` part
+4. Save this ID for configuration
 
-1. Create a new Google Sheet for tracking processed files
-2. Name it something like "Transcript Processing Log"
-3. Copy the Sheet ID from the URL (the long string after `/spreadsheets/d/`)
+## Step 3: Set Up Google Apps Script
 
-Example URL: `https://docs.google.com/spreadsheets/d/1DEF456ABC123/edit`
-Sheet ID: `1DEF456ABC123`
-
-## Step 3: Set Up the Apps Script
-
-1. Go to https://script.google.com
+### 3.1 Create the Script Project
+1. Go to [Google Apps Script](https://script.google.com)
 2. Click **"New Project"**
-3. Delete the existing code
-4. Copy and paste the entire contents of `Code.gs`
-5. Save the project (Ctrl+S or Cmd+S)
-6. Name it "Zoom Transcript Processor"
+3. Delete the default code
+4. Copy and paste the entire contents of `Code.gs` from this repository
+5. Save the project with name "Team Meeting Transcript Processor"
 
-## Step 4: Configure the Script
+### 3.2 Configure Script Properties
+1. In the Apps Script editor, click the **Settings** (gear) icon
+2. Scroll down to **"Script Properties"**
+3. Click **"Add script property"**
+4. Add your Gemini API key:
+   - **Property**: `GEMINI_API_KEY`
+   - **Value**: Your actual API key from Google AI Studio
 
-### Update Person Mapping
-
-Find this section in the code and update it:
-
-```javascript
-PERSON_DOC_MAPPING: {
-  'Rajesh': 'your_rajesh_doc_id_here',
-  'John': 'your_john_doc_id_here',
-  'Sarah': 'your_sarah_doc_id_here'
-  // Add more people and their corresponding Google Doc IDs
-},
-```
-
-Replace with your actual people and doc IDs:
+### 3.3 Update Configuration
+In the Code.gs file, update the CONFIG object:
 
 ```javascript
-PERSON_DOC_MAPPING: {
-  'Rajesh': '1ABC123XYZ789',
-  'Sarah Johnson': '1DEF456ABC123',
-  'Mike Chen': '1GHI789DEF456'
-},
+const CONFIG = {
+  // Replace with your Google Drive folder ID containing transcripts
+  TRANSCRIPT_FOLDER_ID: 'your_folder_id_here',
+  
+  // API configuration (leave as-is)
+  GEMINI_API_KEY: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'),
+  GEMINI_MODEL: 'gemini-1.5-pro',
+  
+  // Replace with your team meeting document ID
+  TEAM_MEETING_DOC_ID: 'your_team_meeting_doc_id_here',
+  
+  // Replace with your tracking spreadsheet ID
+  TRACKING_SHEET_ID: 'your_tracking_sheet_id_here'
+};
 ```
 
-**Important**: The person names must match exactly how they appear in your transcript filenames.
+## Step 4: Grant Permissions and Test
 
-### Update Tracking Sheet ID
+### 4.1 Initialize the System
+1. In the Apps Script editor, select `initializeTrackingSheet` from the function dropdown
+2. Click **Run**
+3. When prompted, grant all requested permissions:
+   - Google Drive access (to read transcripts and write to docs)
+   - Google Sheets access (to track processed files)
+   - External service access (to call Gemini API)
 
-Find this line in the code and update it:
+### 4.2 Test the Setup
+1. Select `setupScript` from the function dropdown and run it
+2. Check the logs (View → Logs) to verify configuration
+3. If you have a test transcript file, get its file ID and run `testProcessSingleFile()`
 
-```javascript
-TRACKING_SHEET_ID: 'your_tracking_sheet_id_here'
+## Step 5: Process Your First Transcripts
+
+### 5.1 Prepare Transcript Files
+Ensure your transcript files follow the naming pattern:
+```
+YYYY-MM-DD-HHMMSS Description.transcript[.vtt]
 ```
 
-Replace with your actual Sheet ID:
+Examples:
+- `2025-08-15-135616 Strat CA Team Time.transcript.vtt`
+- `2025-01-15-143022 Weekly Team Standup.transcript.vtt`
+- `2025-02-03-100000 Sprint Planning Session.transcript`
 
-```javascript
-TRACKING_SHEET_ID: '1DEF456ABC123'
-```
+### 5.2 Run Initial Processing
+1. Select `processNewTranscripts` from the function dropdown
+2. Click **Run**
+3. Check the execution logs to see what files were processed
+4. Verify that notes appear in your team meeting document
+5. Check that processed files are logged in your tracking spreadsheet
 
-### Add Gemini API Key
+## Step 6: Set Up Automatic Processing (Optional)
 
-1. Go to [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Click **Create API Key** and copy it
-3. In Apps Script, click the **Settings** gear icon
-4. Scroll down to **Script properties**
-5. Click **Add script property**
-6. Set:
-   - Property: `GEMINI_API_KEY`
-   - Value: `your-actual-gemini-api-key-here`
+### 6.1 Create Time-Based Trigger
+1. In the Apps Script editor, click the **Triggers** (clock) icon
+2. Click **"Add Trigger"**
+3. Configure:
+   - **Function**: `processNewTranscripts`
+   - **Event source**: Time-driven
+   - **Type**: Hours timer
+   - **Every**: 1 hour (or your preference)
 
-## Step 5: Set Permissions
+### 6.2 Alternative: Use Built-in Function
+Run the `createTrigger()` function to automatically set up an hourly trigger.
 
-1. Click **Run** next to the `setupScript` function
-2. Google will ask for permissions - click **Review permissions**
-3. Choose your Google account
-4. Click **Advanced** → **Go to Zoom Transcript Processor (unsafe)**
-5. Click **Allow**
+## Step 7: Verify Everything Works
 
-## Step 6: Test the Setup
+### 7.1 Check Generated Notes
+Your team meeting document should now contain:
+- Meeting overview with attendees and purpose
+- Key decisions and agreements
+- Project status updates
+- Action items with owners and deadlines
+- Cross-team dependencies
+- Risks and concerns
+- Follow-up items
+- Team announcements
+- Meeting mood assessment
 
-### Initialize Your Tracking Sheet
-
-1. Run the `initializeTrackingSheet` function
-2. Check that your Google Sheet now has headers: "File ID", "Processed Date", "Filename"
-
-### Test with a Single File
-
-1. Find a transcript file ID in your Drive
-2. In the `testProcessSingleFile` function, replace `'your_test_file_id_here'` with the actual file ID
-3. Run the `testProcessSingleFile` function
-4. Check the execution log for any errors
-
-### Process New Files
-
-1. Run the `processNewTranscripts` function
-2. Check the execution logs to see what files were processed
-3. Check your Google Docs to see the professionally formatted meeting notes
-4. Check your tracking sheet to see the processing log
-
-## Step 7: Set Up Automation (Optional)
-
-To automatically process new transcripts:
-
-1. Run the `createTrigger` function, OR
-2. Manually create a trigger:
-   - Click the **Triggers** clock icon
-   - Click **Add Trigger**
-   - Function: `processNewTranscripts`
-   - Event source: **Time-driven**
-   - Type: **Hours timer**
-   - Every: **1 hour**
-
-## Verification Checklist
-
-- [ ] Apps Script project created and code pasted
-- [ ] Gemini API key added to Script Properties
-- [ ] Tracking sheet created and ID updated in config
-- [ ] Person-to-Doc mapping updated with real names and doc IDs
-- [ ] Permissions granted to the script (Drive, Docs, Sheets)
-- [ ] Tracking sheet initialized with `initializeTrackingSheet()`
-- [ ] Test function runs without errors
-- [ ] Meeting notes appear in the correct Google Docs with proper formatting
-- [ ] Files logged to tracking sheet with timestamps
-- [ ] Trigger set up for automatic processing (optional)
-
-## Sample Transcript Filename
-
-Your transcript files should look like this:
-```
-2025-01-18-143022 Rajesh | Ryan - Weekly 1:1.transcript.vtt
-2025-01-18-143022 Rajesh | Ryan - Weekly 1:1.transcript
-```
-
-The script extracts "Rajesh" as the person name and looks for a corresponding Google Doc ID in the mapping. Both `.transcript` and `.transcript.vtt` extensions are supported.
+### 7.2 Check Tracking
+Your tracking spreadsheet should show:
+- File ID of processed transcripts
+- Processing timestamp
+- Original filename
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Person not found**: Check that the name in the filename exactly matches the mapping
-2. **Permission errors**: Re-run the setup and grant all requested permissions
-3. **API errors**: Verify your Gemini API key is correct and active
-4. **Doc not updating**: Check that the document ID is correct and accessible
+**Files not being processed:**
+- Verify transcript files match the naming pattern
+- Check that TRANSCRIPT_FOLDER_ID is correct
+- Run `debugFindFiles()` to see what files are found
 
-### Getting Help
+**Permission errors:**
+- Ensure all requested permissions were granted
+- Verify document IDs are correct and accessible
+- Check that the service account has access to your files
 
-Check the **Executions** tab in Apps Script to see detailed error logs. Most issues are related to:
-- Incorrect document IDs
-- Mismatched person names
-- Missing or invalid Gemini API keys
-- Missing or incorrect tracking sheet ID
+**API errors:**
+- Verify your Gemini API key is valid and active
+- Check your Google AI Studio account has sufficient credits
+- Ensure the API key is correctly set in Script Properties
 
-## Next Steps
+### Debug Functions
 
-Once everything is working:
-- Add more people to the mapping as needed
-- Set up hourly triggers for automatic processing
-- Use `resetLastProcessingTime()` if you need to reprocess recent files
-- Monitor your tracking sheet to see processing history
-- Adjust the AI prompt in `getMeetingPrompt()` if desired
-- Monitor your Gemini API usage (free tier has generous limits)
+Use these functions for troubleshooting:
+- `debugFindFiles()` - See what transcript files are found
+- `resetLastProcessingTime()` - Reprocess files from the last hour
+- `setupScript()` - Verify configuration
 
-## Advanced Usage
+## Customization
 
-### Multiple Daily Runs
-The script is designed for frequent execution:
-- **First run**: Processes files from the last hour
-- **Subsequent runs**: Only processes files created since the last run
-- **Perfect for**: Running every hour or multiple times per day
+### Modify the Meeting Prompt
+Edit the `getTeamMeetingPrompt()` function to customize:
+- Meeting note structure
+- Level of detail
+- Specific focus areas for your team
 
-### Useful Functions
-- `processNewTranscripts()` - Main function (only processes new files)
-- `resetLastProcessingTime()` - Reset to reprocess files from last hour
-- `debugFindFiles()` - See what files are found (useful for troubleshooting)
-- `initializeTrackingSheet()` - Set up tracking sheet headers (run once) 
+### Adjust AI Settings
+In the `generateMeetingNotes()` function, modify:
+- `temperature`: 0.1-1.0 (lower = more consistent)
+- `maxOutputTokens`: Response length limit
+- `GEMINI_MODEL`: Use 'gemini-1.5-flash' for faster/cheaper processing
+
+### Change Processing Frequency
+Modify trigger timing or run manually as needed for your team's meeting schedule.
+
+## Best Practices
+
+1. **Consistent naming**: Use consistent transcript file naming for better parsing
+2. **Regular processing**: Set up automatic triggers for timely note generation
+3. **Review and edit**: AI-generated notes may need human review and editing
+4. **Archive old notes**: Periodically move older notes to archive documents
+5. **Team access**: Ensure all team members have access to the shared meeting notes document
+
+## Support and Maintenance
+
+- Monitor the tracking spreadsheet to ensure files are being processed
+- Check execution logs periodically for any errors
+- Update the Gemini API key if it expires
+- Adjust the prompt as your team's needs evolve 

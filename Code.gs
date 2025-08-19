@@ -1,23 +1,19 @@
 /**
- * Zoom Transcript Processor
- * Processes Zoom transcripts into structured meeting notes using Google Gemini AI
+ * Team Meeting Transcript Processor
+ * Processes team meeting transcripts into structured meeting notes using Google Gemini AI
  */
 
 // Configuration
 const CONFIG = {
-  // The main folder ID containing all transcripts
+  // The main folder ID containing all team meeting transcripts
   TRANSCRIPT_FOLDER_ID: 'folder_id',
   
   // Gemini API configuration
   GEMINI_API_KEY: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'),
   GEMINI_MODEL: 'gemini-1.5-pro',
   
-  // Person to Google Doc ID mapping
-  PERSON_DOC_MAPPING: {
-    'John': 'your_john_doc_id_here',
-    'Sarah': 'your_sarah_doc_id_here'
-    // Add more people and their corresponding Google Doc IDs
-  },
+  // Single shared Google Doc for all team meeting notes
+  TEAM_MEETING_DOC_ID: 'your_team_meeting_doc_id_here',
   
   // Processed transcripts tracking sheet
   TRACKING_SHEET_ID: 'your_tracking_sheet_id_here'
@@ -101,7 +97,7 @@ function findTranscriptFiles(folder) {
  * Check if filename matches transcript pattern
  */
 function isTranscriptFile(filename) {
-  // Pattern: YYYY-MM-DD-HHMMSS Name | Name - Description.transcript.vtt or .transcript
+  // Pattern: YYYY-MM-DD-HHMMSS Description.transcript.vtt or .transcript
   const transcriptPattern = /^\d{4}-\d{2}-\d{2}-\d{6}.*\.transcript(\.vtt)?$/;
   return transcriptPattern.test(filename);
 }
@@ -112,94 +108,101 @@ function isTranscriptFile(filename) {
 function processTranscriptFile(file) {
   console.log(`Processing: ${file.getName()}`);
   
-  // Extract person name from filename
-  const personName = extractPersonName(file.getName());
-  if (!personName || !CONFIG.PERSON_DOC_MAPPING[personName]) {
-    console.log(`Skipping file - person not found or no doc mapping: ${file.getName()}`);
-    return;
-  }
-  
   // Read transcript content
   const transcriptContent = file.getBlob().getDataAsString();
   
-  // Get meeting prompt
-  const meetingPrompt = getMeetingPrompt();
+  // Get team meeting prompt
+  const meetingPrompt = getTeamMeetingPrompt();
   
   // Generate meeting notes using AI
   const meetingNotes = generateMeetingNotes(transcriptContent, meetingPrompt);
   
-  // Add notes to the person's Google Doc
-  addNotesToDoc(CONFIG.PERSON_DOC_MAPPING[personName], meetingNotes, file.getName());
+  // Add notes to the shared team meeting document
+  addNotesToDoc(CONFIG.TEAM_MEETING_DOC_ID, meetingNotes, file.getName());
   
   console.log(`Successfully processed: ${file.getName()}`);
 }
 
 /**
- * Extract person name from filename
+ * Extract meeting title from filename for team meetings
  */
-function extractPersonName(filename) {
-  // Pattern: YYYY-MM-DD-HHMMSS PersonName | Ryan - Description.transcript
-  const match = filename.match(/^\d{4}-\d{2}-\d{2}-\d{6}\s+([^|]+)\s*\|/);
-  return match ? match[1].trim() : null;
+function extractMeetingTitle(filename) {
+  // Pattern: YYYY-MM-DD-HHMMSS Description.transcript.vtt or .transcript
+  const match = filename.match(/^\d{4}-\d{2}-\d{2}-\d{6}\s+(.+)\.transcript(\.vtt)?$/);
+  return match ? match[1].trim() : 'Team Meeting';
 }
 
 /**
- * Get the meeting prompt template
+ * Get the team meeting prompt template
  */
-function getMeetingPrompt() {
-  return `Role: You are an expert executive assistant. Your task is to analyze the following meeting transcript between me (Ryan), the manager, and my employee(s). Your goal is to create a clear, concise, and actionable document that we can use as a shared record. It should help my team members track their responsibilities and allow me to manage our projects and follow-ups effectively.
+function getTeamMeetingPrompt() {
+  return `Role: You are an expert team meeting facilitator and note-taker. Your task is to analyze the following team meeting transcript and create comprehensive meeting notes that capture team decisions, project updates, cross-functional collaboration, and action items. The output should serve as a shared record for all team members and stakeholders.
 
 Format the output using Markdown for clarity.
 
 Here is the structure I want you to follow:
 
-1. Executive Summary:
-Start with a 2-3 sentence high-level summary of the entire conversation. What was the main purpose and what were the key outcomes of this meeting?
+1. Meeting Overview:
+Provide a 2-3 sentence summary of the meeting including the main purpose, key attendees mentioned, and primary outcomes. Include the meeting type (standup, retrospective, planning, status update, etc.) if identifiable.
 
-2. Key Decisions Made:
-In a bulleted list, outline every final decision that was made during the call. For each decision, briefly mention the rationale if it was discussed.
+2. Key Decisions & Agreements:
+List all decisions made during the meeting in bullet format. For each decision, include the rationale and any voting/consensus process mentioned.
 
-Example: We will adopt the new "Project Alpha" timeline, as it aligns better with the client's revised launch date.
+Example: 
+• Decided to move Project Alpha launch from Q3 to Q4 due to integration dependencies with Platform team
+• Agreed to implement new testing protocol after three team members raised quality concerns
 
-3. Action Items:
-Present all action items in a table with the columns: Owner, Task, and Deadline. Be very specific about the tasks and ensure every team member's responsibilities are captured.
+3. Project Status Updates:
+Create a section for each major project or initiative discussed. Use the following format:
 
-| Owner | Task | Deadline |
-|-------|------|----------|
-| Ryan | [Specific task description, e.g., "Approve final budget for Q4 marketing"] | [Date] |
-| [Employee Name] | [Specific task description, e.g., "Send revised client proposal to Ryan for review"] | [Date] |
-| [Another Employee] | [Specific task description, e.g., "Complete the user testing for the beta feature"] | [Date] |
+**Project Name**: [Status: On Track/At Risk/Blocked/Complete]
+• Current progress and milestones achieved
+• Blockers or challenges identified
+• Dependencies on other teams or external factors
+• Next steps and upcoming milestones
 
-Note: The 'Owner' column should clearly state who is responsible, whether it's me (Ryan) or a specific employee by name.
+4. Action Items & Responsibilities:
+Present all action items in a table format with Owner, Task, Deadline, and Priority columns.
 
-4. Open Questions & Items for Follow-up:
-Create a bulleted list of any topics that were left unresolved, questions that were raised but not answered, or items that require a future conversation. This is crucial for ensuring nothing is missed.
+| Owner | Task | Deadline | Priority |
+|-------|------|----------|----------|
+| [Name] | [Specific task description] | [Date] | [High/Medium/Low] |
+| [Name] | [Specific task description] | [Date] | [High/Medium/Low] |
 
-Example: Still need to determine who from the engineering team will be assigned to the "Project Zeta" bug fixes.
+5. Cross-Team Dependencies & Coordination:
+List any dependencies on other teams, external stakeholders, or shared resources that were discussed.
 
-Example: Follow up with the finance department on the status of the new software purchase order.
+Example:
+• Waiting on API specifications from Platform team before UI development can proceed
+• Need approval from Security team for new authentication flow
+• Coordinating with Marketing team on launch timeline
 
-5. Main Discussion Topics:
-Provide a more detailed summary broken down by the main topics or projects discussed. Under each topic heading, use bullet points to summarize the key points, ideas, and context.
+6. Risks & Concerns Raised:
+Document any risks, concerns, or potential issues that were brought up during the meeting.
 
-Project/Topic 1: [Name of Project/Topic]
+Example:
+• Timeline concerns for Q4 deliverables due to resource constraints
+• Technical debt in legacy system may impact new feature development
+• Team capacity issues with upcoming holidays
 
-[Key point on status or update]
+7. Follow-up Items & Next Steps:
+List items that require follow-up in future meetings or offline discussions.
 
-[Blocker or challenge identified]
+Example:
+• Schedule architecture review session with Platform team
+• Follow up on budget approval status for additional contractor
+• Clarify requirements with Product team before next sprint
 
-[Next steps discussed]
+8. Team Announcements & Updates:
+Capture any announcements, team updates, personnel changes, or general information shared.
 
-Project/Topic 2: [Name of Project/Topic]
+9. Next Meeting Planning:
+If discussed, note the next meeting date, agenda items to cover, or preparation required.
 
-[Key point or detail]
+10. Overall Team Mood & Dynamics:
+Briefly assess the team's energy, collaboration quality, and any dynamics observed (e.g., engaged and collaborative, some tension around deadlines, positive energy about new project, etc.).
 
-[Another key point or detail]
-
-6. Overall Sentiment:
-Briefly describe the overall tone or sentiment of the meeting (e.g., productive and collaborative, urgent, positive, concerned, etc.).
-
-Now, please analyze the following transcript:`;
+Now, please analyze the following team meeting transcript:`;
 }
 
 /**
@@ -607,12 +610,13 @@ function markFileAsProcessed(fileId, filename) {
  */
 function setupScript() {
   // This function helps you set up the necessary properties
-  console.log('Setting up script...');
+  console.log('Setting up Team Meeting Transcript Processor...');
   console.log('Please set the following script properties:');
   console.log('1. GEMINI_API_KEY - Your Google Gemini API key');
-  console.log('2. Update CONFIG.PERSON_DOC_MAPPING with actual Google Doc IDs');
+  console.log('2. Update CONFIG.TEAM_MEETING_DOC_ID with your shared team meeting document ID');
   console.log('3. Update CONFIG.TRACKING_SHEET_ID with your Google Sheet ID');
-  console.log('4. Optionally set up triggers for automatic processing');
+  console.log('4. Update CONFIG.TRANSCRIPT_FOLDER_ID with your Google Drive folder ID');
+  console.log('5. Optionally set up triggers for automatic processing');
 }
 
 /**
