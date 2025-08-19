@@ -6,7 +6,7 @@
 // Configuration
 const CONFIG = {
   // The main folder ID containing all transcripts
-  TRANSCRIPT_FOLDER_ID: '1KFvT3C0ONlIBX1bv0V7JLlAlLW_6yRIV',
+  TRANSCRIPT_FOLDER_ID: 'folder_id',
   
   // Gemini API configuration
   GEMINI_API_KEY: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY'),
@@ -14,7 +14,6 @@ const CONFIG = {
   
   // Person to Google Doc ID mapping
   PERSON_DOC_MAPPING: {
-    'Rajesh': 'your_rajesh_doc_id_here',
     'John': 'your_john_doc_id_here',
     'Sarah': 'your_sarah_doc_id_here'
     // Add more people and their corresponding Google Doc IDs
